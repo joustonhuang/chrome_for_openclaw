@@ -320,21 +320,24 @@ case "$MODE" in
 
   --status)
     echo "==> chrome_for_openclaw: checking Chrome session status"
-    local_pid=$(pgrep -f "chrome.*--remote-debugging-port=${DEBUG_PORT}" 2>/dev/null | head -1 || true)
-    if [ -z "$local_pid" ]; then
-      echo "WARNING: No Chrome process found on port ${DEBUG_PORT}." >&2
-      echo "         Run this script without flags (or --restart) to launch Chrome." >&2
-      exit 1
-    fi
-    if ! curl -fsS "http://127.0.0.1:${DEBUG_PORT}/json/version" >"$DEVTOOLS_INFO" 2>/dev/null; then
-      echo "WARNING: Chrome process exists (PID $local_pid) but CDP is not responding on port ${DEBUG_PORT}." >&2
-      echo "         Try --restart to recover." >&2
-      exit 1
+    _pid=$(pgrep -f "chrome.*--remote-debugging-port=${DEBUG_PORT}" 2>/dev/null | head -1 || true)
+    if [ -n "$_pid" ] && curl -fsS "http://127.0.0.1:${DEBUG_PORT}/json/version" >"$DEVTOOLS_INFO" 2>/dev/null; then
+      _status="running"
+      _cdp_ok="yes"
+    elif [ -n "$_pid" ]; then
+      _status="process exists but CDP not responding — try --restart"
+      _cdp_ok="no"
+    else
+      _pid="(not running)"
+      _status="not running — run this script without flags to launch Chrome"
+      _cdp_ok="no"
     fi
     echo ""
     echo "==> Chrome session info for agent:"
-    echo "    PID:              $local_pid"
+    echo "    Status:           $_status"
+    echo "    PID:              $_pid"
     echo "    CDP port:         $DEBUG_PORT"
+    echo "    CDP responding:   $_cdp_ok"
     echo "    DevTools URL:     http://127.0.0.1:${DEBUG_PORT}"
     echo "    DevTools version: http://127.0.0.1:${DEBUG_PORT}/json/version"
     echo "    User data dir:    $USER_DATA_DIR"
