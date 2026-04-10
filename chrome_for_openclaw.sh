@@ -4,6 +4,7 @@
 # Usage:
 #   bash chrome_for_openclaw.sh              # Launch Chrome in CDP debug mode (default)
 #   bash chrome_for_openclaw.sh --install    # One-time system setup (Chrome + XRDP + XFCE)
+#   bash chrome_for_openclaw.sh --restart    # Kill all Chrome processes and relaunch
 #   bash chrome_for_openclaw.sh --reinstall  # Uninstall everything, then run --install
 #   bash chrome_for_openclaw.sh --uninstall  # Undo all changes made by --install
 #
@@ -237,8 +238,8 @@ do_launch_chrome() {
     "$START_URL" \
     >"$DEBUG_LOG" 2>&1 &
 
-  local chrome_pid=$!
-  echo "==> Chrome launched with PID $chrome_pid"
+  CHROME_PID=$!
+  echo "==> Chrome launched with PID $CHROME_PID"
 
   echo "==> Waiting ${WAIT_SECS}s for DevTools endpoint"
   sleep "$WAIT_SECS"
@@ -295,6 +296,21 @@ case "$MODE" in
     echo ""
     echo "==> Reinstall complete."
     echo "    Please log out and reconnect via RDP, then run this script again to start Chrome."
+    ;;
+
+  --restart)
+    echo "==> chrome_for_openclaw: restarting Chrome"
+    CHROME_PID=""
+    do_launch_chrome
+    echo ""
+    echo "==> Chrome session info for agent:"
+    echo "    PID:              $CHROME_PID"
+    echo "    CDP port:         $DEBUG_PORT"
+    echo "    DevTools URL:     http://127.0.0.1:${DEBUG_PORT}"
+    echo "    DevTools version: http://127.0.0.1:${DEBUG_PORT}/json/version"
+    echo "    User data dir:    $USER_DATA_DIR"
+    echo "    Debug log:        $DEBUG_LOG"
+    echo "    DevTools info:    $DEVTOOLS_INFO"
     ;;
 
   launch|*)
