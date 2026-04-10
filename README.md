@@ -3,6 +3,57 @@ This is not a traditional OpenClaw “Skill.” It enables agents to control a r
 
 It's only for Debian/Ubuntu for now. (Welcome if someone wants to port to Windows / macOS.)
 
+---
+
+## Quick Start (via curl)
+
+### Run directly (one-shot)
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
+```
+
+### Download, then run
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh -o chrome_for_openclaw.sh
+chmod +x chrome_for_openclaw.sh
+./chrome_for_openclaw.sh
+```
+
+### Override defaults via environment variables
+
+All settings are configurable without editing the script:
+
+```bash
+CHROME_BIN=/usr/bin/chromium \
+DEBUG_PORT=9223 \
+USER_DATA_DIR=/tmp/my-chrome-profile \
+START_URL=https://github.com \
+WAIT_SECS=8 \
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
+```
+
+| Variable | Default | Description |
+|---|---|---|
+| `CHROME_BIN` | `/opt/google/chrome/chrome` | Path to Chrome binary |
+| `DEBUG_PORT` | `9222` | Chrome remote debugging port |
+| `USER_DATA_DIR` | `/tmp/chrome-little7` | Chrome user profile directory |
+| `START_URL` | `https://mail.google.com/mail/u/0/#inbox` | Initial page to open |
+| `WAIT_SECS` | `5` | Seconds to wait for DevTools to come up |
+| `KILL_WAIT_SECS` | `3` | Seconds to wait after killing existing Chrome |
+| `DEBUG_LOG` | `/tmp/chrome-little7-debug.log` | Chrome stdout/stderr log |
+| `DEVTOOLS_INFO` | `/tmp/chrome-little7-devtools.json` | Saved DevTools version JSON |
+
+### Requirements
+
+- Debian / Ubuntu
+- Google Chrome installed at `/opt/google/chrome/chrome` (or set `CHROME_BIN`)
+- An active X display (XRDP, local desktop, or set `DISPLAY` explicitly)
+- `curl` and `xdpyinfo` available
+
+---
+
 ## Why Browser Control (Instead of Skills / APIs)
 
 This tool is **not a “Skill”** in the traditional OpenClaw / Claude Cowork fashion. 
