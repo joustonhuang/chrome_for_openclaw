@@ -177,3 +177,17 @@ With a stable browser control layer:
 
 If you can control the browser reliably,  
 You already control most of the internet.
+
+---
+
+## Third-Party Components
+
+This repository includes [agent-browser](https://github.com/vercel-labs/agent-browser) by Vercel Labs
+as a git submodule under the `agent-browser/` directory.
+
+`agent-browser` is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+The full license text is included at `agent-browser/LICENSE`.
+
+No modifications have been made to the `agent-browser` source code.
+The OpenClaw skill in `skill/SKILL.md` documents how to use `agent-browser` together with
+the `chrome_for_openclaw.sh` launcher script.
