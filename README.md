@@ -5,6 +5,19 @@ It's only for Debian/Ubuntu for now. (Welcome if someone wants to port to Window
 
 ---
 
+## How It Works (Typical Setup)
+
+This script is designed to be used alongside **XRDP**. The intended workflow is:
+
+1. You log in to your Linux machine via an **RDP client** (e.g., Windows Remote Desktop, Remmina). This gives you an active X display session.
+2. Inside that RDP session, OpenClaw is running and has shell access to the machine.
+3. You instruct OpenClaw to **download and run this script** — it will fetch it directly from GitHub via `curl` and launch Chrome in debug mode within your RDP display.
+4. Chrome exposes the **DevTools Protocol** on `localhost:9222`, which OpenClaw then uses to control the browser.
+
+> This script is safe for OpenClaw to self-install and self-execute. No manual setup is required beyond having Chrome and XRDP in place.
+
+---
+
 ## Quick Start (via curl)
 
 ### Run directly (one-shot)
