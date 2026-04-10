@@ -14,6 +14,10 @@ Browser automation via `agent-browser` connected to a real, running **Google Chr
 over CDP. All commands connect to Chrome at `localhost:9222` — no separate Chromium download needed.
 Your existing Chrome login sessions (Gmail, GitHub, etc.) are immediately available.
 
+> **Also install this skill in OpenClaw:**
+> [openclaw-agent-browser-clawdbot](https://clawhub.ai/hsyhph/openclaw-agent-browser-clawdbot)
+> — the original `agent-browser` skill that this one is based on and compatible with.
+
 ## Prerequisites
 
 Everything is handled by a single script: `chrome_for_openclaw.sh`.

@@ -18,6 +18,27 @@ This script is designed to be used alongside **XRDP**. The intended workflow is:
 
 ---
 
+## Required: Install the OpenClaw Skill
+
+This script alone is not enough. OpenClaw also needs to know **how to operate the browser**.
+Install the companion skill so your agent understands the full command set:
+
+**[openclaw-agent-browser-clawdbot](https://clawhub.ai/hsyhph/openclaw-agent-browser-clawdbot)**
+
+The skill teaches OpenClaw to:
+- Connect to Chrome via CDP (`agent-browser --cdp 9222`)
+- Take accessibility tree snapshots and interact with elements by ref
+- Handle authentication, sessions, tabs, screenshots, and more
+
+The two components work together:
+
+| Component | Role |
+|---|---|
+| `chrome_for_openclaw.sh` | Launches and manages the Chrome process |
+| `openclaw-agent-browser-clawdbot` skill | Teaches the agent how to control the browser |
+
+---
+
 ## Quick Start (via curl)
 
 ### Run directly (one-shot)
@@ -182,12 +203,7 @@ You already control most of the internet.
 
 ## Third-Party Components
 
-This repository includes [agent-browser](https://github.com/vercel-labs/agent-browser) by Vercel Labs
-as a git submodule under the `agent-browser/` directory.
-
-`agent-browser` is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
-The full license text is included at `agent-browser/LICENSE`.
-
-No modifications have been made to the `agent-browser` source code.
-The OpenClaw skill in `skill/SKILL.md` documents how to use `agent-browser` together with
-the `chrome_for_openclaw.sh` launcher script.
+The reference documentation in `skill/references/` is copied from
+[vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) by Vercel Labs,
+licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+No modifications have been made to those files.
