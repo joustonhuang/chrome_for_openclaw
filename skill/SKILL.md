@@ -16,28 +16,28 @@ Your existing Chrome login sessions (Gmail, GitHub, etc.) are immediately availa
 
 ## Prerequisites
 
-There are two scripts. Run them in order.
+Everything is handled by a single script: `chrome_for_openclaw.sh`.
 
 ### Step 1 — One-time system setup (run once, requires sudo)
 
-Installs Google Chrome if missing, configures XRDP + XFCE, and prepares the X session.
+Installs Google Chrome if missing, then configures XRDP + XFCE.
 OpenClaw can run this step itself:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/setup_xrdp_xfce.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh) --setup
 ```
 
-Options:
+Other options:
 
 ```bash
 # Reinstall everything from scratch
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/setup_xrdp_xfce.sh) --reinstall
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh) --reinstall
 
-# Undo all changes made by this script
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/setup_xrdp_xfce.sh) --uninstall
+# Undo all changes made by --setup
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh) --uninstall
 ```
 
-After this script completes, **log out and reconnect via RDP** to get a fresh XFCE session.
+After `--setup` completes, **log out and reconnect via RDP** to get a fresh XFCE session.
 
 ### Step 2 — Start Chrome (run once per RDP session)
 
@@ -48,14 +48,14 @@ OpenClaw can run this step itself:
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 ```
 
-Optional overrides:
+Optional environment variable overrides:
 
 ```bash
 DEBUG_PORT=9222 START_URL=https://gmail.com \
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 ```
 
-This script kills any existing Chrome processes, starts Google Chrome with
+This kills any existing Chrome processes, starts Google Chrome with
 `--remote-debugging-port=9222`, and waits for the CDP endpoint to respond.
 
 ### Step 3 — Install agent-browser
@@ -424,8 +424,8 @@ agent-browser --cdp 9222 click @e1       # Use new refs
 ## Installation Summary
 
 ```bash
-# Step 1: One-time system setup (Chrome + XRDP + XFCE)
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/setup_xrdp_xfce.sh)
+# Step 1: One-time system setup (Chrome + XRDP + XFCE, requires sudo)
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh) --setup
 # → Log out and reconnect via RDP after this completes
 
 # Step 2: Each RDP session — launch Chrome in CDP debug mode
