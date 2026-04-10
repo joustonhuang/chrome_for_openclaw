@@ -38,12 +38,12 @@ bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_open
 |---|---|---|
 | `CHROME_BIN` | `/opt/google/chrome/chrome` | Path to Chrome binary |
 | `DEBUG_PORT` | `9222` | Chrome remote debugging port |
-| `USER_DATA_DIR` | `/tmp/chrome-little7` | Chrome user profile directory |
+| `USER_DATA_DIR` | `/tmp/chrome4openclaw` | Chrome user profile directory |
 | `START_URL` | `https://mail.google.com/mail/u/0/#inbox` | Initial page to open |
 | `WAIT_SECS` | `5` | Seconds to wait for DevTools to come up |
 | `KILL_WAIT_SECS` | `3` | Seconds to wait after killing existing Chrome |
-| `DEBUG_LOG` | `/tmp/chrome-little7-debug.log` | Chrome stdout/stderr log |
-| `DEVTOOLS_INFO` | `/tmp/chrome-little7-devtools.json` | Saved DevTools version JSON |
+| `DEBUG_LOG` | `/tmp/chrome4openclaw-debug.log` | Chrome stdout/stderr log |
+| `DEVTOOLS_INFO` | `/tmp/chrome4openclaw-devtools.json` | Saved DevTools version JSON |
 
 ### Requirements
 

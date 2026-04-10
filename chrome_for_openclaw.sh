@@ -3,12 +3,12 @@ set -euo pipefail
 
 CHROME_BIN="${CHROME_BIN:-/opt/google/chrome/chrome}"
 DEBUG_PORT="${DEBUG_PORT:-9222}"
-USER_DATA_DIR="${USER_DATA_DIR:-/tmp/chrome-little7}"
+USER_DATA_DIR="${USER_DATA_DIR:-/tmp/chrome4openclaw}"
 START_URL="${START_URL:-https://mail.google.com/mail/u/0/#inbox}"
 WAIT_SECS="${WAIT_SECS:-5}"
 KILL_WAIT_SECS="${KILL_WAIT_SECS:-3}"
-DEBUG_LOG="${DEBUG_LOG:-/tmp/chrome-little7-debug.log}"
-DEVTOOLS_INFO="${DEVTOOLS_INFO:-/tmp/chrome-little7-devtools.json}"
+DEBUG_LOG="${DEBUG_LOG:-/tmp/chrome4openclaw-debug.log}"
+DEVTOOLS_INFO="${DEVTOOLS_INFO:-/tmp/chrome4openclaw-devtools.json}"
 
 if [ ! -x "$CHROME_BIN" ]; then
   echo "ERROR: Chrome binary not found or not executable: $CHROME_BIN" >&2
@@ -71,9 +71,9 @@ echo "    DISPLAY=$SELECTED_DISPLAY"
 echo "==> Stopping existing Chrome processes"
 CHROME_KILL_PATTERNS=(
   '^/opt/google/chrome/chrome($| )'
-  '^/home/little7/.agent-browser/browsers/.*/chrome($| )'
+  '^/home/chrome4openclaw/.agent-browser/browsers/.*/chrome($| )'
   '^/opt/google/chrome/chrome_crashpad_handler($| )'
-  '^/home/little7/.agent-browser/browsers/.*/chrome_crashpad_handler($| )'
+  '^/home/chrome4openclaw/.agent-browser/browsers/.*/chrome_crashpad_handler($| )'
 )
 
 for pattern in "${CHROME_KILL_PATTERNS[@]}"; do
