@@ -4,9 +4,13 @@
 # Usage:
 #   bash chrome_for_openclaw.sh              # Launch Chrome in CDP debug mode (default)
 #   bash chrome_for_openclaw.sh --install    # One-time system setup (Chrome + XRDP + XFCE)
+#   bash chrome_for_openclaw.sh --status     # Print Chrome session info (if already running)
 #   bash chrome_for_openclaw.sh --restart    # Kill all Chrome processes and relaunch
 #   bash chrome_for_openclaw.sh --reinstall  # Uninstall everything, then run --install
 #   bash chrome_for_openclaw.sh --uninstall  # Undo all changes made by --install
+#
+# Flags (can be combined with any mode):
+#   --yes | -y   Skip confirmation prompts (for CI / non-interactive use)
 #
 # Environment variable overrides (for default launch mode):
 #   CHROME_BIN, DEBUG_PORT, USER_DATA_DIR, START_URL,
@@ -21,6 +25,19 @@ WAIT_SECS="${WAIT_SECS:-5}"
 KILL_WAIT_SECS="${KILL_WAIT_SECS:-3}"
 DEBUG_LOG="${DEBUG_LOG:-/tmp/chrome4openclaw-debug.log}"
 DEVTOOLS_INFO="${DEVTOOLS_INFO:-/tmp/chrome4openclaw-devtools.json}"
+
+# ─── Argument parsing ─────────────────────────────────────────────────────────
+
+MODE="launch"
+YES_MODE=0
+
+for _arg in "$@"; do
+  case "$_arg" in
+    --yes|-y)       YES_MODE=1 ;;
+    --install|--reinstall|--uninstall|--restart|--status|launch) MODE="$_arg" ;;
+    *)              MODE="$_arg" ;;
+  esac
+done
 
 # ─── System setup helpers ─────────────────────────────────────────────────────
 
@@ -90,6 +107,11 @@ confirm_setup() {
   echo "│  Proceed?  Type OK to continue, or anything else to cancel.    │"
   echo "└─────────────────────────────────────────────────────────────────┘"
   echo ""
+  if [ "$YES_MODE" -eq 1 ]; then
+    echo "  (--yes flag set, proceeding automatically)"
+    echo ""
+    return
+  fi
   read -r -p "  Your choice [OK/Cancel]: " answer
   case "$answer" in
     OK|ok|Ok)
@@ -264,8 +286,6 @@ do_launch_chrome() {
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
-MODE="${1:-launch}"
-
 case "$MODE" in
   --install)
     echo "==> chrome_for_openclaw: one-time system setup"
@@ -296,6 +316,30 @@ case "$MODE" in
     echo ""
     echo "==> Reinstall complete."
     echo "    Please log out and reconnect via RDP, then run this script again to start Chrome."
+    ;;
+
+  --status)
+    echo "==> chrome_for_openclaw: checking Chrome session status"
+    local_pid=$(pgrep -f "chrome.*--remote-debugging-port=${DEBUG_PORT}" 2>/dev/null | head -1 || true)
+    if [ -z "$local_pid" ]; then
+      echo "WARNING: No Chrome process found on port ${DEBUG_PORT}." >&2
+      echo "         Run this script without flags (or --restart) to launch Chrome." >&2
+      exit 1
+    fi
+    if ! curl -fsS "http://127.0.0.1:${DEBUG_PORT}/json/version" >"$DEVTOOLS_INFO" 2>/dev/null; then
+      echo "WARNING: Chrome process exists (PID $local_pid) but CDP is not responding on port ${DEBUG_PORT}." >&2
+      echo "         Try --restart to recover." >&2
+      exit 1
+    fi
+    echo ""
+    echo "==> Chrome session info for agent:"
+    echo "    PID:              $local_pid"
+    echo "    CDP port:         $DEBUG_PORT"
+    echo "    DevTools URL:     http://127.0.0.1:${DEBUG_PORT}"
+    echo "    DevTools version: http://127.0.0.1:${DEBUG_PORT}/json/version"
+    echo "    User data dir:    $USER_DATA_DIR"
+    echo "    Debug log:        $DEBUG_LOG"
+    echo "    DevTools info:    $DEVTOOLS_INFO"
     ;;
 
   --restart)

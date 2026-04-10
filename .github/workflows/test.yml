@@ -1,0 +1,104 @@
+name: Test chrome_for_openclaw
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Dependencies ──────────────────────────────────────────────────────
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            xvfb x11-utils \
+            xrdp ssl-cert \
+            xfce4 xfce4-terminal \
+            dbus-x11 \
+            curl
+
+      # ── --install ─────────────────────────────────────────────────────────
+      - name: Run --install (non-interactive)
+        run: bash chrome_for_openclaw.sh --install --yes
+
+      - name: Verify Chrome binary
+        run: |
+          /opt/google/chrome/chrome --version
+          google-chrome --version
+
+      - name: Verify XRDP/XFCE config files created
+        run: |
+          test -f /etc/lightdm/lightdm.conf.d/50-xfce.conf && echo "✓ LightDM config"
+          test -f /etc/X11/Xwrapper.config              && echo "✓ Xwrapper config"
+          test -f ~/.config/xfce4/helpers.rc            && echo "✓ XFCE4 helpers"
+          test -f ~/.xsession                           && echo "✓ .xsession"
+
+      # ── Start virtual display ─────────────────────────────────────────────
+      - name: Start Xvfb
+        run: |
+          Xvfb :99 -screen 0 1280x720x24 &
+          sleep 1
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+
+      # ── Default launch ────────────────────────────────────────────────────
+      - name: Launch Chrome (default mode)
+        run: bash chrome_for_openclaw.sh
+
+      - name: Verify CDP endpoint is up
+        run: |
+          curl -fsS http://127.0.0.1:9222/json/version | python3 -m json.tool
+          echo "✓ CDP endpoint responded"
+
+      # ── --status ──────────────────────────────────────────────────────────
+      - name: Test --status (Chrome already running)
+        run: bash chrome_for_openclaw.sh --status
+
+      # ── --restart ─────────────────────────────────────────────────────────
+      - name: Test --restart
+        run: bash chrome_for_openclaw.sh --restart
+
+      - name: Verify CDP endpoint still up after restart
+        run: |
+          curl -fsS http://127.0.0.1:9222/json/version | python3 -m json.tool
+          echo "✓ CDP endpoint responded after restart"
+
+      # ── agent-browser ─────────────────────────────────────────────────────
+      - name: Install agent-browser
+        run: npm install -g agent-browser
+
+      - name: Test agent-browser CDP connection
+        run: |
+          agent-browser --cdp 9222 get url --json
+          echo "✓ agent-browser connected via CDP"
+
+      - name: Test agent-browser snapshot
+        run: |
+          agent-browser --cdp 9222 snapshot -i
+          echo "✓ snapshot succeeded"
+
+      # ── --uninstall ───────────────────────────────────────────────────────
+      - name: Test --uninstall
+        run: bash chrome_for_openclaw.sh --uninstall
+
+      - name: Verify Chrome removed
+        run: |
+          if /opt/google/chrome/chrome --version 2>/dev/null; then
+            echo "FAIL: Chrome binary still present after uninstall" && exit 1
+          else
+            echo "✓ Chrome binary removed"
+          fi
+
+      - name: Verify config files removed
+        run: |
+          test ! -f /etc/lightdm/lightdm.conf.d/50-xfce.conf && echo "✓ LightDM config removed"
+          test ! -f /etc/X11/Xwrapper.config                 && echo "✓ Xwrapper config removed"
+          test ! -f ~/.config/xfce4/helpers.rc               && echo "✓ XFCE4 helpers removed"
+          test ! -f ~/.xsession                              && echo "✓ .xsession removed"
