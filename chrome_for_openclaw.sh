@@ -71,9 +71,7 @@ echo "    DISPLAY=$SELECTED_DISPLAY"
 echo "==> Stopping existing Chrome processes"
 CHROME_KILL_PATTERNS=(
   '^/opt/google/chrome/chrome($| )'
-  '^/home/chrome4openclaw/.agent-browser/browsers/.*/chrome($| )'
   '^/opt/google/chrome/chrome_crashpad_handler($| )'
-  '^/home/chrome4openclaw/.agent-browser/browsers/.*/chrome_crashpad_handler($| )'
 )
 
 for pattern in "${CHROME_KILL_PATTERNS[@]}"; do

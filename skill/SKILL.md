@@ -1,36 +1,35 @@
 ---
 name: chrome-browser
-description: Chrome browser automation CLI optimized for AI agents — uses Google Chrome (not Chromium) with XRDP display support and CDP-based session management
+description: Chrome browser automation CLI optimized for AI agents — connects to a running Google Chrome instance via CDP (Chrome DevTools Protocol) using agent-browser. Requires an XRDP session with Chrome launched via chrome_for_openclaw.sh.
 metadata: {"clawdbot":{"emoji":"🌐","requires":{"commands":["agent-browser"]},"homepage":"https://github.com/joustonhuang/chrome_for_openclaw"}}
 ---
 
-# Chrome Browser Skill
+# Chrome Browser Skill (CDP Mode)
 
-Browser automation using Google Chrome (not Chromium) via the `agent-browser` CLI.
-Designed for use inside an XRDP session where Chrome runs as a visible, persistent debug session exposed over CDP.
+Automate a real, running Google Chrome instance via CDP using `agent-browser --cdp 9222`.
+
+Unlike the default Chromium mode, this skill connects to an **existing Chrome session** that is already
+open inside your XRDP desktop — with your existing login cookies, history, and open tabs intact.
 
 ## Prerequisites
 
 ### 1. Active XRDP Session
 
-This skill requires an active X display. Log in to your Linux machine using an RDP client
-(Windows Remote Desktop, Remmina, etc.) before using this skill.
+Log in to your Linux machine via an RDP client (Windows Remote Desktop, Remmina, etc.).
+This gives Chrome a real X display to render on, and lets you see exactly what the agent is doing.
 
 ### 2. Launch Chrome via chrome_for_openclaw
 
-Download and run the launcher script to start Chrome in CDP debug mode:
+OpenClaw can run this step itself. It downloads and executes the launcher script directly:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 ```
 
-This script:
-- Kills any existing Chrome processes
-- Starts Google Chrome with `--remote-debugging-port=9222`
-- Waits for the DevTools endpoint to respond
-- Is safe for OpenClaw to self-download and self-execute
+This script starts Google Chrome with `--remote-debugging-port=9222` and waits for the CDP endpoint
+to respond. Once it prints `==> Done`, Chrome is ready to accept connections.
 
-You can also override defaults via environment variables:
+Optional overrides:
 
 ```bash
 DEBUG_PORT=9222 START_URL=https://gmail.com \
@@ -43,64 +42,91 @@ bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_open
 npm install -g agent-browser
 ```
 
-> No need to run `agent-browser install` — Chrome is already installed on the system.
-> This skill uses the `--channel chrome` flag to point agent-browser at the real Chrome binary.
+> Do **not** run `agent-browser install`. There is no need to download a separate Chromium binary —
+> we connect directly to the Chrome instance started above.
 
 ---
 
-## Why Use Google Chrome Instead of Chromium
+## Core Concept: CDP Connection
 
-- Uses your existing logged-in Chrome profile and session cookies
-- No need to download or manage a separate Chromium binary
-- Works within an XRDP session — you see exactly what the agent is doing in real time
-- Chrome is already installed and maintained by the system
+After Chrome is running with `--remote-debugging-port=9222`, connect to it with:
 
----
+```bash
+# Explicit CDP port (recommended)
+agent-browser --cdp 9222 <command>
 
-## Why Use This Over Built-in Browser Tool
+# Auto-discover any running Chrome with remote debugging enabled
+agent-browser --auto-connect <command>
+```
 
-**Use chrome-browser when:**
-- Automating multi-step workflows using existing login sessions
-- Need deterministic element selection
-- Performance is critical
-- Working with complex SPAs
-- Want to visually monitor what the agent is doing via RDP
+All subsequent commands in this skill use `--cdp 9222`. You can also export it once to avoid
+repeating it:
 
-**Use built-in browser tool when:**
-- Need screenshots/PDFs for analysis
-- Visual inspection required
-- Browser extension integration needed
+```bash
+export AGENT_BROWSER_CDP_URL=http://127.0.0.1:9222
+# Now all agent-browser commands connect to the running Chrome automatically
+agent-browser open https://example.com
+agent-browser snapshot -i
+```
 
 ---
 
 ## Core Workflow
 
 ```bash
-# 1. (One-time per session) Launch Chrome
+# Step 1: (Once per session) Launch Chrome
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 
-# 2. Navigate and snapshot
-agent-browser --channel chrome open https://example.com
-agent-browser --channel chrome snapshot -i --json
+# Step 2: Connect and navigate
+agent-browser --cdp 9222 open https://example.com
 
-# 3. Parse refs from JSON, then interact
-agent-browser --channel chrome click @e2
-agent-browser --channel chrome fill @e3 "text"
+# Step 3: Snapshot to discover interactive elements
+agent-browser --cdp 9222 snapshot -i
 
-# 4. Re-snapshot after page changes
-agent-browser --channel chrome snapshot -i --json
+# Step 4: Interact using refs from snapshot
+agent-browser --cdp 9222 click @e2
+agent-browser --cdp 9222 fill @e3 "text"
+
+# Step 5: Re-snapshot after page changes
+agent-browser --cdp 9222 snapshot -i
 ```
 
-### Tip: Avoid repeating --channel chrome
-
-Set the channel once in your shell session:
+### Use batch for 2+ sequential commands
 
 ```bash
-export PLAYWRIGHT_BROWSER_CHANNEL=chrome
-# Now all agent-browser calls use Chrome automatically
-agent-browser open https://example.com
-agent-browser snapshot -i --json
+agent-browser --cdp 9222 batch "open https://example.com" "snapshot -i"
+agent-browser --cdp 9222 batch "click @e1" "wait 1000" "snapshot -i"
 ```
+
+---
+
+## Why CDP Instead of --channel chrome
+
+| | `--channel chrome` | `--cdp 9222` (this skill) |
+|---|---|---|
+| Browser instance | Launches a new one | Connects to running Chrome |
+| Login state | Empty profile | Your existing session |
+| Visible in XRDP | Maybe | Always |
+| Setup | None | Requires `chrome_for_openclaw.sh` |
+
+CDP mode is the right choice when you want to automate a site you are already logged into,
+without re-authenticating.
+
+---
+
+## Why Use This Over Built-in Browser Tool
+
+**Use chrome-browser when:**
+- Automating multi-step workflows using your existing login sessions
+- Need deterministic, ref-based element selection
+- Performance is critical
+- Working with complex SPAs
+- Want to visually monitor the agent via RDP
+
+**Use built-in browser tool when:**
+- Need screenshots/PDFs for offline analysis
+- Visual inspection is the primary goal
+- Browser extension integration is needed
 
 ---
 
@@ -108,99 +134,98 @@ agent-browser snapshot -i --json
 
 ### Navigation
 ```bash
-agent-browser --channel chrome open <url>
-agent-browser --channel chrome back | forward | reload | close
+agent-browser --cdp 9222 open <url>
+agent-browser --cdp 9222 back
+agent-browser --cdp 9222 forward
+agent-browser --cdp 9222 reload
+agent-browser --cdp 9222 close
 ```
 
-### Snapshot (Always use -i --json)
+### Snapshot (always use -i)
 ```bash
-agent-browser --channel chrome snapshot -i --json
-agent-browser --channel chrome snapshot -i -c -d 5 --json
-agent-browser --channel chrome snapshot -s "#main" -i
+agent-browser --cdp 9222 snapshot -i
+agent-browser --cdp 9222 snapshot -i --urls
+agent-browser --cdp 9222 snapshot -i --json
+agent-browser --cdp 9222 snapshot -i -c -d 5 --json
+agent-browser --cdp 9222 snapshot -s "#main" -i
 ```
 
-### Interactions (Ref-based)
+### Interactions (ref-based)
 ```bash
-agent-browser --channel chrome click @e2
-agent-browser --channel chrome fill @e3 "text"
-agent-browser --channel chrome type @e3 "text"
-agent-browser --channel chrome hover @e4
-agent-browser --channel chrome check @e5 | uncheck @e5
-agent-browser --channel chrome select @e6 "value"
-agent-browser --channel chrome press "Enter"
-agent-browser --channel chrome scroll down 500
-agent-browser --channel chrome drag @e7 @e8
+agent-browser --cdp 9222 click @e2
+agent-browser --cdp 9222 fill @e3 "text"
+agent-browser --cdp 9222 type @e3 "text"
+agent-browser --cdp 9222 hover @e4
+agent-browser --cdp 9222 check @e5
+agent-browser --cdp 9222 uncheck @e5
+agent-browser --cdp 9222 select @e6 "value"
+agent-browser --cdp 9222 press "Enter"
+agent-browser --cdp 9222 scroll down 500
+agent-browser --cdp 9222 drag @e7 @e8
 ```
 
 ### Get Information
 ```bash
-agent-browser --channel chrome get text @e1 --json
-agent-browser --channel chrome get html @e2 --json
-agent-browser --channel chrome get value @e3 --json
-agent-browser --channel chrome get attr @e4 "href" --json
-agent-browser --channel chrome get title --json
-agent-browser --channel chrome get url --json
-agent-browser --channel chrome get count ".item" --json
-```
-
-### Check State
-```bash
-agent-browser --channel chrome is visible @e2 --json
-agent-browser --channel chrome is enabled @e3 --json
-agent-browser --channel chrome is checked @e4 --json
+agent-browser --cdp 9222 get text @e1
+agent-browser --cdp 9222 get html @e2 --json
+agent-browser --cdp 9222 get value @e3 --json
+agent-browser --cdp 9222 get attr @e4 "href" --json
+agent-browser --cdp 9222 get title --json
+agent-browser --cdp 9222 get url --json
+agent-browser --cdp 9222 get cdp-url
 ```
 
 ### Wait
 ```bash
-agent-browser --channel chrome wait @e2
-agent-browser --channel chrome wait 1000
-agent-browser --channel chrome wait --text "Welcome"
-agent-browser --channel chrome wait --url "**/dashboard"
-agent-browser --channel chrome wait --load networkidle
-agent-browser --channel chrome wait --fn "window.ready === true"
+agent-browser --cdp 9222 wait @e2
+agent-browser --cdp 9222 wait 1000
+agent-browser --cdp 9222 wait --text "Welcome"
+agent-browser --cdp 9222 wait --url "**/dashboard"
+agent-browser --cdp 9222 wait --fn "window.ready === true"
 ```
 
-### Sessions (Isolated Browsers)
+### Sessions
 ```bash
-agent-browser --channel chrome --session admin open site.com
-agent-browser --channel chrome --session user open site.com
-agent-browser --channel chrome session list
+agent-browser --cdp 9222 --session admin open site.com
+agent-browser --cdp 9222 session list
 ```
 
 ### State Persistence
 ```bash
-agent-browser --channel chrome state save auth.json
-agent-browser --channel chrome state load auth.json
+agent-browser --cdp 9222 state save auth.json
+agent-browser --cdp 9222 state load auth.json
 ```
 
 ### Screenshots & PDFs
 ```bash
-agent-browser --channel chrome screenshot page.png
-agent-browser --channel chrome screenshot --full page.png
-agent-browser --channel chrome pdf page.pdf
+agent-browser --cdp 9222 screenshot page.png
+agent-browser --cdp 9222 screenshot --full page.png
+agent-browser --cdp 9222 screenshot --annotate
+agent-browser --cdp 9222 pdf page.pdf
 ```
 
-### Network Control
+### Network
 ```bash
-agent-browser --channel chrome network route "**/ads/*" --abort
-agent-browser --channel chrome network route "**/api/*" --body '{"x":1}'
-agent-browser --channel chrome network requests --filter api
+agent-browser --cdp 9222 network requests
+agent-browser --cdp 9222 network requests --type xhr,fetch
+agent-browser --cdp 9222 network route "**/ads/*" --abort
 ```
 
-### Cookies & Storage
+### Tabs
 ```bash
-agent-browser --channel chrome cookies
-agent-browser --channel chrome cookies set name value
-agent-browser --channel chrome storage local key
-agent-browser --channel chrome storage local set key val
+agent-browser --cdp 9222 tab list
+agent-browser --cdp 9222 tab new https://example.com
+agent-browser --cdp 9222 tab 2
+agent-browser --cdp 9222 tab close
 ```
 
-### Tabs & Frames
+### JavaScript Evaluation
 ```bash
-agent-browser --channel chrome tab new https://example.com
-agent-browser --channel chrome tab 2
-agent-browser --channel chrome frame @e5
-agent-browser --channel chrome frame main
+agent-browser --cdp 9222 eval 'document.title'
+
+agent-browser --cdp 9222 eval --stdin <<'EVALEOF'
+JSON.stringify(Array.from(document.querySelectorAll("a")).map(a => a.href))
+EVALEOF
 ```
 
 ---
@@ -225,54 +250,46 @@ agent-browser --channel chrome frame main
 
 ## Best Practices
 
-1. **Always launch Chrome first** — run `chrome_for_openclaw.sh` at the start of each session
-2. **Always use `-i` flag** — focus on interactive elements
-3. **Always use `--json`** — easier to parse
-4. **Wait for stability** — `agent-browser --channel chrome wait --load networkidle`
-5. **Save auth state** — skip login flows with `state save/load`
-6. **Use sessions** — isolate different browser contexts
-7. **Set `PLAYWRIGHT_BROWSER_CHANNEL=chrome`** — avoid repeating `--channel chrome`
+1. **Launch Chrome first** — run `chrome_for_openclaw.sh` once per session
+2. **Always use `-i` flag** — focus on interactive elements only
+3. **Always use `--json`** — easier for the agent to parse
+4. **Use `batch` for 2+ steps** — avoids repeated round-trips
+5. **Re-snapshot after navigation** — refs are invalidated on page change
+6. **Export `AGENT_BROWSER_CDP_URL`** — avoid repeating `--cdp 9222` on every command
+7. **Use `--auto-connect`** if you are unsure which port Chrome is on
 
 ---
 
-## Example: Gmail Workflow
+## Example: Gmail Compose
 
 ```bash
-# Launch Chrome (already logged into Gmail)
+# Step 1: Launch Chrome (already logged in to Gmail)
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 
-export PLAYWRIGHT_BROWSER_CHANNEL=chrome
+export AGENT_BROWSER_CDP_URL=http://127.0.0.1:9222
 
-agent-browser open https://mail.google.com/mail/u/0/#inbox
-agent-browser wait --load networkidle
-agent-browser snapshot -i --json
-# AI identifies compose button @e1
-agent-browser click @e1
-agent-browser wait --load networkidle
-agent-browser snapshot -i --json
-# AI fills in To, Subject, Body
-agent-browser fill @e2 "recipient@example.com"
-agent-browser fill @e3 "Subject line"
-agent-browser fill @e4 "Email body text"
-agent-browser click @e5  # Send button
+agent-browser batch "open https://mail.google.com/mail/u/0/#inbox" "wait 2000" "snapshot -i"
+# Agent identifies Compose button ref, e.g. @e4
+agent-browser batch "click @e4" "wait 1000" "snapshot -i"
+# Agent identifies To/Subject/Body refs
+agent-browser batch \
+  "fill @e5 \"recipient@example.com\"" \
+  "fill @e6 \"Subject line\"" \
+  "fill @e7 \"Email body\"" \
+  "click @e8"
 ```
 
 ---
 
-## Example: Multi-Session Testing
+## Example: Import Existing Login Session
+
+If Chrome is already logged into a site, save the auth state for future sessions:
 
 ```bash
-export PLAYWRIGHT_BROWSER_CHANNEL=chrome
-
-# Admin session
-agent-browser --session admin open app.com
-agent-browser --session admin state load admin-auth.json
-agent-browser --session admin snapshot -i --json
-
-# User session (simultaneous)
-agent-browser --session user open app.com
-agent-browser --session user state load user-auth.json
-agent-browser --session user snapshot -i --json
+agent-browser --cdp 9222 --auto-connect state save ./auth.json
+# Reuse it later (even in a fresh agent-browser session without --cdp)
+agent-browser state load ./auth.json
+agent-browser open https://app.example.com/dashboard
 ```
 
 ---
@@ -280,18 +297,17 @@ agent-browser --session user snapshot -i --json
 ## Installation Summary
 
 ```bash
-# Step 1: Log in via RDP to your Linux machine
+# Step 1: Log in to your Linux machine via RDP
 
-# Step 2: Launch Chrome in debug mode
+# Step 2: Launch Chrome in CDP debug mode
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 
-# Step 3: Install agent-browser CLI
+# Step 3: Install agent-browser (skip `agent-browser install` — no Chromium needed)
 npm install -g agent-browser
 
-# Step 4: Start automating
-export PLAYWRIGHT_BROWSER_CHANNEL=chrome
-agent-browser open https://example.com
-agent-browser snapshot -i --json
+# Step 4: Connect and automate
+export AGENT_BROWSER_CDP_URL=http://127.0.0.1:9222
+agent-browser batch "open https://example.com" "snapshot -i"
 ```
 
 ---
