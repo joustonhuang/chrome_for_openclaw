@@ -3,9 +3,9 @@
 #
 # Usage:
 #   bash chrome_for_openclaw.sh              # Launch Chrome in CDP debug mode (default)
-#   bash chrome_for_openclaw.sh --setup      # One-time system setup (Chrome + XRDP + XFCE)
-#   bash chrome_for_openclaw.sh --reinstall  # Uninstall everything, then run --setup
-#   bash chrome_for_openclaw.sh --uninstall  # Undo all changes made by --setup
+#   bash chrome_for_openclaw.sh --install    # One-time system setup (Chrome + XRDP + XFCE)
+#   bash chrome_for_openclaw.sh --reinstall  # Uninstall everything, then run --install
+#   bash chrome_for_openclaw.sh --uninstall  # Undo all changes made by --install
 #
 # Environment variable overrides (for default launch mode):
 #   CHROME_BIN, DEBUG_PORT, USER_DATA_DIR, START_URL,
@@ -180,7 +180,7 @@ pick_display() {
 do_launch_chrome() {
   if ! chrome_is_installed; then
     echo "ERROR: Chrome binary not found or not executable: $CHROME_BIN" >&2
-    echo "Hint: run '$0 --setup' to install Chrome and configure XRDP." >&2
+    echo "Hint: run '$0 --install' to install Chrome and configure XRDP." >&2
     exit 1
   fi
 
@@ -266,7 +266,7 @@ do_launch_chrome() {
 MODE="${1:-launch}"
 
 case "$MODE" in
-  --setup)
+  --install)
     echo "==> chrome_for_openclaw: one-time system setup"
     if chrome_is_installed; then
       echo "==> Google Chrome already installed: $(google-chrome --version)"
