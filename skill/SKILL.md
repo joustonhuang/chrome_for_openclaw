@@ -16,19 +16,37 @@ Your existing Chrome login sessions (Gmail, GitHub, etc.) are immediately availa
 
 ## Prerequisites
 
-### 1. Active XRDP Session
+There are two scripts. Run them in order.
 
-Log in to your Linux machine via RDP (Windows Remote Desktop, Remmina, etc.) before proceeding.
-Chrome needs a real X display; XRDP provides one.
+### Step 1 — One-time system setup (run once, requires sudo)
 
-### 2. Launch Chrome (self-installable by OpenClaw)
+Installs Google Chrome if missing, configures XRDP + XFCE, and prepares the X session.
+OpenClaw can run this step itself:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/setup_xrdp_xfce.sh)
+```
+
+Options:
+
+```bash
+# Reinstall everything from scratch
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/setup_xrdp_xfce.sh) --reinstall
+
+# Undo all changes made by this script
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/setup_xrdp_xfce.sh) --uninstall
+```
+
+After this script completes, **log out and reconnect via RDP** to get a fresh XFCE session.
+
+### Step 2 — Start Chrome (run once per RDP session)
+
+After logging in via RDP, launch Chrome in CDP debug mode.
+OpenClaw can run this step itself:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 ```
-
-This script kills any existing Chrome processes, starts Google Chrome with
-`--remote-debugging-port=9222`, and waits for CDP to respond. Run it once per session.
 
 Optional overrides:
 
@@ -37,7 +55,10 @@ DEBUG_PORT=9222 START_URL=https://gmail.com \
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 ```
 
-### 3. Install agent-browser
+This script kills any existing Chrome processes, starts Google Chrome with
+`--remote-debugging-port=9222`, and waits for the CDP endpoint to respond.
+
+### Step 3 — Install agent-browser
 
 ```bash
 npm install -g agent-browser
@@ -403,9 +424,11 @@ agent-browser --cdp 9222 click @e1       # Use new refs
 ## Installation Summary
 
 ```bash
-# Step 1: Log in to your Linux machine via RDP
+# Step 1: One-time system setup (Chrome + XRDP + XFCE)
+bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/setup_xrdp_xfce.sh)
+# → Log out and reconnect via RDP after this completes
 
-# Step 2: Launch Chrome in CDP debug mode (OpenClaw can run this itself)
+# Step 2: Each RDP session — launch Chrome in CDP debug mode
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 
 # Step 3: Install agent-browser (skip `agent-browser install`)
