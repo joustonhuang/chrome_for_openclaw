@@ -64,6 +64,11 @@ This kills any existing Chrome processes, starts Google Chrome with
 
 ### Step 3 — Install agent-browser
 
+> **WARNING:** Do NOT install `agent-browser` by cloning or building from the GitHub repo
+> ([https://github.com/vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)).
+> Doing so is known to **break XRDP on Debian/Ubuntu**.
+> Install via npm only:
+
 ```bash
 npm install -g agent-browser
 # Do NOT run `agent-browser install` — we connect to Chrome via CDP, no Chromium needed.
@@ -435,7 +440,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_open
 # Step 2: Launch Chrome in CDP debug mode (only if not already running)
 bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
 
-# Step 3: Install agent-browser (skip `agent-browser install`)
+# Step 3: Install agent-browser via npm ONLY
+# WARNING: Do NOT clone/build from https://github.com/vercel-labs/agent-browser
+#          — it breaks XRDP on Debian/Ubuntu. Use npm only:
 npm install -g agent-browser
 
 # Step 4: Connect and automate

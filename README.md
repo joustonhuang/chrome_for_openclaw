@@ -85,6 +85,12 @@ bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_open
 - Google Chrome installed at `/opt/google/chrome/chrome` (or set `CHROME_BIN`)
 - An active X display (XRDP, local desktop, or set `DISPLAY` explicitly)
 - `curl` and `xdpyinfo` available
+- `agent-browser` CLI installed via npm: `npm install -g agent-browser`
+
+> **WARNING:** Do NOT install `agent-browser` by cloning or building from
+> [https://github.com/vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser).
+> This is known to **break XRDP on Debian/Ubuntu**.
+> Always install via npm: `npm install -g agent-browser`
 
 ---
 
