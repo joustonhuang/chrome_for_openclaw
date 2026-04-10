@@ -59,7 +59,50 @@ do_uninstall_chrome() {
   sudo apt update
 }
 
+confirm_setup() {
+  echo ""
+  echo "┌─────────────────────────────────────────────────────────────────┐"
+  echo "│           chrome_for_openclaw — System Setup                    │"
+  echo "├─────────────────────────────────────────────────────────────────┤"
+  echo "│  The following changes will be made to this system:             │"
+  echo "│                                                                 │"
+  echo "│  • /etc/lightdm/lightdm.conf.d/50-xfce.conf                    │"
+  echo "│      Set default desktop session to XFCE                       │"
+  echo "│                                                                 │"
+  echo "│  • /etc/X11/Xwrapper.config                                     │"
+  echo "│      Allow XRDP to start X sessions (allowed_users=anybody)    │"
+  echo "│                                                                 │"
+  echo "│  • ~/.config/xfce4/helpers.rc                                   │"
+  echo "│      Set xfce4-terminal as default terminal emulator           │"
+  echo "│                                                                 │"
+  echo "│  • ~/.xsession                                                  │"
+  echo "│      Launch XFCE on RDP login via dbus-launch                  │"
+  echo "│                                                                 │"
+  echo "│  • ~/.cache/sessions/*, ~/.Xauthority, ~/.xsession-errors       │"
+  echo "│      Cleared (stale session files removed)                     │"
+  echo "│                                                                 │"
+  echo "│  • sudo adduser xrdp ssl-cert                                   │"
+  echo "│      Grant xrdp access to SSL certificates                     │"
+  echo "│                                                                 │"
+  echo "│  After setup you will need to log out and reconnect via RDP.   │"
+  echo "├─────────────────────────────────────────────────────────────────┤"
+  echo "│  Proceed?  Type OK to continue, or anything else to cancel.    │"
+  echo "└─────────────────────────────────────────────────────────────────┘"
+  echo ""
+  read -r -p "  Your choice [OK/Cancel]: " answer
+  case "$answer" in
+    OK|ok|Ok)
+      echo ""
+      ;;
+    *)
+      echo "Cancelled. No changes were made."
+      exit 0
+      ;;
+  esac
+}
+
 do_setup_xrdp_xfce() {
+  confirm_setup
   echo "==> Configuring LightDM to use XFCE session"
   sudo mkdir -p /etc/lightdm/lightdm.conf.d
   sudo bash -c 'cat > /etc/lightdm/lightdm.conf.d/50-xfce.conf <<EOF
