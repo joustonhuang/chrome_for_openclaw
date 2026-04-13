@@ -37,6 +37,10 @@ The two components work together:
 | `chrome_for_openclaw.sh` | Launches and manages the Chrome process |
 | `openclaw-agent-browser-clawdbot` skill | Teaches the agent how to control the browser |
 
+Additional workflow-specific CDP skills live here:
+- https://github.com/joustonhuang/openclaw-cdp-skills
+- First example: `cdp-gmail-delivery`
+
 ---
 
 ## Quick Start (via curl)
