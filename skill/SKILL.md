@@ -1,8 +1,8 @@
 ---
-name: chrome-browser
-description: Browser automation CLI for AI agents using Google Chrome via CDP. Connects to a running Chrome instance started by chrome_for_openclaw.sh inside an XRDP session. Use when the user needs to interact with websites using their existing login sessions — navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, or automating any browser task.
-allowed-tools: Bash(agent-browser:*), Bash(npx agent-browser:*)
-metadata: {"clawdbot":{"emoji":"🌐","requires":{"commands":["agent-browser"]},"homepage":"https://github.com/joustonhuang/chrome_for_openclaw"}}
+name: chrome-for-openclaw
+description: Browser automation CLI for AI agents using Google Chrome via CDP. Connects to a locally reviewed Chrome instance started by chrome_for_openclaw.sh inside an XRDP session. Use when the user needs to interact with websites using their existing login sessions, navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, or automating browser tasks on a trusted local host.
+allowed-tools: Bash(agent-browser:*), Bash(npx agent-browser:*), Bash(npm:*)
+metadata: {"openclaw":{"emoji":"🌐","requires":{"bins":["bash","agent-browser","npm"]},"install":[{"id":"npm","kind":"npm","package":"agent-browser","bins":["agent-browser"],"label":"Install agent-browser (npm)"}]},"clawdbot":{"homepage":"https://github.com/joustonhuang/chrome_for_openclaw"}}
 ---
 
 # Chrome Browser Skill (CDP Mode)
@@ -20,47 +20,52 @@ Your existing Chrome login sessions (Gmail, GitHub, etc.) are immediately availa
 
 ## Prerequisites
 
-Everything is handled by a single script: `chrome_for_openclaw.sh`.
+Everything is handled by a single local script: `chrome_for_openclaw.sh`.
 
-### Step 1 — One-time system setup (run once, requires sudo)
+### Safety model
 
-Installs Google Chrome if missing, then configures XRDP + XFCE.
-OpenClaw can run this step itself:
+This skill is for a trusted, operator-controlled local host. Running Chrome with CDP access means local processes that can reach `127.0.0.1:9222` may control that browser session. Review the launcher script locally before using it, and avoid using this workflow on shared or untrusted machines.
+
+### Step 1 — Review the local launcher script
+
+Read `chrome_for_openclaw.sh` from the repository before running it. Do not use `curl | bash` or process substitution in the skill flow.
+
+### Step 2 — One-time system setup (run once, requires sudo)
+
+Run the reviewed local script manually from the cloned repository:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh) --install
+bash ./chrome_for_openclaw.sh --install
 ```
 
 Other options:
 
 ```bash
 # Reinstall everything from scratch
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh) --reinstall
+bash ./chrome_for_openclaw.sh --reinstall
 
 # Undo all changes made by --install
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh) --uninstall
+bash ./chrome_for_openclaw.sh --uninstall
 ```
 
-After `--install` completes, **log out and reconnect via RDP** to get a fresh XFCE session.
+This step may install Google Chrome if missing and configure XRDP + XFCE. After `--install` completes, log out and reconnect via RDP to get a fresh XFCE session.
 
-### Step 2 — Start Chrome (run when Chrome is not already running)
+### Step 3 — Start Chrome (run when Chrome is not already running)
 
-Launch Chrome in CDP debug mode. Only needed if Chrome is not already open.
-OpenClaw can run this step itself:
+Launch Chrome in CDP debug mode from the reviewed local script:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
+bash ./chrome_for_openclaw.sh
 ```
 
 Optional environment variable overrides:
 
 ```bash
 DEBUG_PORT=9222 START_URL=https://gmail.com \
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
+bash ./chrome_for_openclaw.sh
 ```
 
-This kills any existing Chrome processes, starts Google Chrome with
-`--remote-debugging-port=9222`, and waits for the CDP endpoint to respond.
+This restarts Chrome, binds CDP to `127.0.0.1:9222`, and waits for the local endpoint to respond.
 
 ### Step 3 — Install agent-browser
 
@@ -136,8 +141,7 @@ Run commands separately when you need to parse snapshot output to discover refs 
 
 ## Handling Authentication
 
-Because Chrome is already running with your login sessions, **you are already authenticated**
-on sites you have previously logged into. No login flow needed in most cases.
+Because Chrome is already running with your login sessions, you may already be authenticated on sites you have previously logged into. Treat that as sensitive operator data and use this workflow only on a trusted local host.
 
 **Option 1: Use the existing Chrome session (default — zero setup)**
 
@@ -150,11 +154,13 @@ agent-browser --cdp 9222 snapshot -i
 **Option 2: Save session state for use outside CDP**
 
 ```bash
-# Export auth from the running Chrome
+# Export auth from the running Chrome to a protected local file
 agent-browser --cdp 9222 state save ./auth.json
 # Use it later in a standalone agent-browser session
 agent-browser --state ./auth.json open https://app.example.com/dashboard
 ```
+
+Do not commit state files to source control or leave them on shared machines.
 
 **Option 3: Chrome profile reuse**
 
@@ -433,19 +439,21 @@ agent-browser --cdp 9222 click @e1       # Use new refs
 ## Installation Summary
 
 ```bash
-# Step 1: One-time system setup (Chrome + XRDP + XFCE, requires sudo)
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh) --install
+# Step 1: Review the local launcher script in this repo before running it
+
+# Step 2: One-time system setup (Chrome + XRDP + XFCE, requires sudo)
+bash ./chrome_for_openclaw.sh --install
 # → Log out and reconnect via RDP after this completes
 
-# Step 2: Launch Chrome in CDP debug mode (only if not already running)
-bash <(curl -fsSL https://raw.githubusercontent.com/joustonhuang/chrome_for_openclaw/main/chrome_for_openclaw.sh)
+# Step 3: Launch Chrome in CDP debug mode (only if not already running)
+bash ./chrome_for_openclaw.sh
 
-# Step 3: Install agent-browser via npm ONLY
+# Step 4: Install agent-browser via npm ONLY
 # WARNING: Do NOT clone/build from https://github.com/vercel-labs/agent-browser
-#          — it breaks XRDP on Debian/Ubuntu. Use npm only:
+#          it breaks XRDP on Debian/Ubuntu. Use npm only:
 npm install -g agent-browser
 
-# Step 4: Connect and automate
+# Step 5: Connect and automate on a trusted local host
 export AGENT_BROWSER_CDP_URL=http://127.0.0.1:9222
 agent-browser batch "open https://example.com" "snapshot -i"
 ```
