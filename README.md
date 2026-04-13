@@ -18,28 +18,36 @@ This script is designed to be used alongside **XRDP**. The intended workflow is:
 
 ---
 
-## Required: Install the OpenClaw Skill
+## Required: Install OpenClaw Skills
 
-This script alone is not enough. OpenClaw also needs to know **how to operate the browser**.
-Install the companion skill so your agent understands the full command set:
+This script alone is not enough. OpenClaw also needs skills to operate browser workflows.
+
+### 1) Core browser control skill (required)
+
+Install:
 
 **[openclaw-agent-browser-clawdbot](https://clawhub.ai/hsyhph/openclaw-agent-browser-clawdbot)**
 
-The skill teaches OpenClaw to:
+It teaches OpenClaw to:
 - Connect to Chrome via CDP (`agent-browser --cdp 9222`)
 - Take accessibility tree snapshots and interact with elements by ref
 - Handle authentication, sessions, tabs, screenshots, and more
 
-The two components work together:
+### 2) Workflow skill pack (recommended)
+
+Repo:
+- https://github.com/joustonhuang/openclaw-cdp-skills
+
+Current workflow skill:
+- `cdp-gmail-delivery` (available on ClawHub)
+
+The components work together:
 
 | Component | Role |
 |---|---|
 | `chrome_for_openclaw.sh` | Launches and manages the Chrome process |
-| `openclaw-agent-browser-clawdbot` skill | Teaches the agent how to control the browser |
-
-Additional workflow-specific CDP skills live here:
-- https://github.com/joustonhuang/openclaw-cdp-skills
-- First example: `cdp-gmail-delivery`
+| `openclaw-agent-browser-clawdbot` | Core browser control skill |
+| `openclaw-cdp-skills` (`cdp-*`) | Workflow-specific automation patterns |
 
 ---
 
